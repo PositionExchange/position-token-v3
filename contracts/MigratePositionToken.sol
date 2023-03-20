@@ -6,16 +6,14 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "./interfaces/ITreasury.sol";
 
 contract MigratePositionToken is Ownable, ReentrancyGuard {
     IERC20 public posiTokenV2 =
         IERC20(0x5CA42204cDaa70d5c773946e69dE942b85CA6706);
     IERC20 public posiTokenV3;
 
-    ITreasury public treasury;
     uint256 public totalSupplyV2;
-    bool public alreadyMint;
+    bool public isAlreadyInit;
     mapping(address => bool) public counterParties;
     uint256 public totalMigrated;
 
@@ -27,17 +25,19 @@ contract MigratePositionToken is Ownable, ReentrancyGuard {
         _;
     }
 
-    constructor(ITreasury _treasury, IERC20 _positionTokenV3) {
-        treasury = _treasury;
-        posiTokenV3 = _positionTokenV3;
-        /// Mint
-        totalSupplyV2 = posiTokenV2.totalSupply();
+
+    function initMigrate(IERC20 positionTokenV3) external onlyOwner {
+        require(!isAlreadyInit, "Initialized");
+        isAlreadyInit = true;
+        totalSupplyV2  = posiTokenV2.totalSupply();
+        posiTokenV3 = positionTokenV3;
+        _burn();
     }
 
 
 
     function migrate() external nonReentrant {
-        require(alreadyMint, "Minted");
+        require(isAlreadyInit, "Not initialized");
         address migrator = msg.sender;
 
         /// Get balanceBefore of Empty Address
@@ -66,7 +66,7 @@ contract MigratePositionToken is Ownable, ReentrancyGuard {
         address recipient,
         uint256 amountRequest
     ) external onlyCounterParty {
-        require(alreadyMint, "Minted");
+        require(isAlreadyInit, "Not initialized");
         posiTokenV3.transfer(recipient, amountRequest);
         totalMigrated += amountRequest;
 
@@ -74,13 +74,6 @@ contract MigratePositionToken is Ownable, ReentrancyGuard {
     }
 
 
-
-    function mintTotalSupply() external onlyOwner {
-        require(!alreadyMint, "Minted");
-        alreadyMint = true;
-        treasury.mint(address(this), totalSupplyV2);
-        _burn();
-    }
 
     function addCounterParty(address _counterParty) external onlyOwner {
         counterParties[_counterParty] = true;

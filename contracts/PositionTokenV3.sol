@@ -11,7 +11,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 
 contract PositionTokenV3 is ERC20Votes, Ownable, Pausable {
-    address public treasuryContract;
     address public botKeeper;
     uint256 public constant MAX_SUPPLY = 100_000_000 ether;
 
@@ -32,14 +31,13 @@ contract PositionTokenV3 is ERC20Votes, Ownable, Pausable {
     constructor(
         string memory _name,
         string memory _symbol,
-        address _treasuryContract
+        address migrateContract,
+        IERC20 positionTokenV2
     ) ERC20(_name, _symbol) ERC20Permit(_name) {
-        treasuryContract = _treasuryContract;
+        uint256 totoSupply = positionTokenV2.totalSupply();
+        _mint(migrateContract, totoSupply);
     }
 
-    function mint(address recipient, uint256 amount) external onlyTreasury {
-        _mint(recipient, amount);
-    }
 
     function _maxSupply() internal view virtual override returns (uint224) {
         return uint224(MAX_SUPPLY);
@@ -59,8 +57,4 @@ contract PositionTokenV3 is ERC20Votes, Ownable, Pausable {
         botKeeper = _newKeeper;
     }
 
-    function setTreasuryAddress(address _newAddress) public onlyOwner {
-        emit TreasuryContractChanged(treasuryContract, _newAddress);
-        treasuryContract = _newAddress;
-    }
 }
