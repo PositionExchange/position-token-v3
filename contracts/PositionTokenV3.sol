@@ -23,10 +23,7 @@ contract PositionTokenV3 is ERC20Votes, Ownable, Pausable {
         address indexed newAddress
     );
 
-    modifier onlyTreasury() {
-        require(msg.sender == treasuryContract, "Only treasury");
-        _;
-    }
+
 
     constructor(
         string memory _name,
