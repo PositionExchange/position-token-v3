@@ -16,14 +16,14 @@ contract MigratePositionToken is Ownable, ReentrancyGuard {
     ITreasury public treasury;
     uint256 public totalSupplyV2;
     bool public alreadyMint;
-    mapping(address => bool) public counterParty;
+    mapping(address => bool) public counterParties;
     uint256 public totalMigrated;
 
     event Migrated(address recipient, uint256 amount);
     event RequestMigrated(address requestor, address recipient, uint256 amount);
 
     modifier onlyCounterParty() {
-        require(counterParty[msg.sender], "Only counterParty");
+        require(counterParties[msg.sender], "Only counterParty");
         _;
     }
 
@@ -39,11 +39,23 @@ contract MigratePositionToken is Ownable, ReentrancyGuard {
     function migrate() external nonReentrant {
         require(alreadyMint, "Minted");
         address migrator = msg.sender;
+
+        /// Get balanceBefore of Empty Address
         uint256 balanceBefore = posiTokenV2.balanceOf(emptyAddress());
+
+        /// Get balance of Migrator and migrate
         uint256 balanceOfMigrator = posiTokenV2.balanceOf(migrator);
+
+        /// Burn POSI v2 to empty address
         posiTokenV2.transferFrom(migrator, emptyAddress(), balanceOfMigrator);
+
+        /// Get balanceBefore of Empty Address
         uint256 balanceAfter = posiTokenV2.balanceOf(emptyAddress());
+
+        /// Get real balance migrated
         uint256 amountMigrated = balanceAfter - balanceBefore;
+
+        /// Release token v3 already migrated
         posiTokenV3.transfer(migrator, amountMigrated);
         totalMigrated += amountMigrated;
 
@@ -70,6 +82,14 @@ contract MigratePositionToken is Ownable, ReentrancyGuard {
         _burn();
     }
 
+    function addCounterParty(address _counterParty) external onlyOwner {
+        counterParties[_counterParty] = true;
+    }
+
+    function revokeCounterParty(address _counterParty) external onlyOwner {
+        counterParties[_counterParty] = false;
+    }
+
 
     function deadAddress() public pure returns (address) {
         return 0x000000000000000000000000000000000000dEaD;
@@ -84,7 +104,7 @@ contract MigratePositionToken is Ownable, ReentrancyGuard {
         uint256 balanceDead = posiTokenV2.balanceOf(deadAddress());
         uint256 balanceEmpty = posiTokenV2.balanceOf(emptyAddress());
         uint256 totalBurned = balanceDead + balanceEmpty;
-        posiTokenV3.transfer(emptyAddress(), totalBurned);
+        posiTokenV3.transfer(deadAddress(), totalBurned);
         totalMigrated += totalBurned;
     }
 

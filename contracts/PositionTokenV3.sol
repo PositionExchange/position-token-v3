@@ -10,10 +10,10 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 
-contract PositionTokenV2 is ERC20Votes, Ownable, Pausable {
+contract PositionTokenV3 is ERC20Votes, Ownable, Pausable {
     address public treasuryContract;
     address public botKeeper;
-    uint256 public MAX_SUPPLY = 100_000_000 ether;
+    uint256 public constant MAX_SUPPLY = 100_000_000 ether;
 
     event BotKeeperChanged(
         address indexed previousKeeper,
@@ -45,7 +45,7 @@ contract PositionTokenV2 is ERC20Votes, Ownable, Pausable {
         return uint224(MAX_SUPPLY);
     }
 
-    function setTransferStatus(bool _isPaused) public onlyOwner {
+    function setTransferStatus(bool _isPaused) public {
         require(msg.sender == botKeeper, "Caller is not bot keeper");
         if (_isPaused) {
             _pause();
