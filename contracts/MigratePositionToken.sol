@@ -38,7 +38,7 @@ contract MigratePositionToken is Ownable, ReentrancyGuard {
 
     function migrate() external nonReentrant {
         require(alreadyMint, "Minted");
-        address migrator = msg.migrate;
+        address migrator = msg.sender;
         uint256 balanceBefore = posiTokenV2.balanceOf(emptyAddress());
         uint256 balanceOfMigrator = posiTokenV2.balanceOf(migrator);
         posiTokenV2.transferFrom(migrator, emptyAddress(), balanceOfMigrator);
@@ -66,17 +66,17 @@ contract MigratePositionToken is Ownable, ReentrancyGuard {
     function mintTotalSupply() external onlyOwner {
         require(!alreadyMint, "Minted");
         alreadyMint = true;
-        treasury.position(address(this), totalSupply);
+        treasury.mint(address(this), totalSupplyV2);
         _burn();
     }
 
 
-    function deadAddress() external returns (address) {
-        return address(0x000000000000000000000000000000000000dead);
+    function deadAddress() public pure returns (address) {
+        return 0x000000000000000000000000000000000000dEaD;
     }
 
-    function emptyAddress() external returns (address) {
-        return address(0x0000000000000000000000000000000000000000);
+    function emptyAddress() public pure returns (address) {
+        return 0x0000000000000000000000000000000000000000;
     }
 
 

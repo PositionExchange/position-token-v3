@@ -45,7 +45,7 @@ contract PositionTokenV2 is ERC20Votes, Ownable, Pausable {
         return uint224(MAX_SUPPLY);
     }
 
-    function setTransferStatus(bool _isPaused) public {
+    function setTransferStatus(bool _isPaused) public onlyOwner {
         require(msg.sender == botKeeper, "Caller is not bot keeper");
         if (_isPaused) {
             _pause();
